@@ -39,6 +39,26 @@ type Html msg
 -- elements
 
 
+mapAttribute : (a -> b) -> Attribute a -> Attribute b
+mapAttribute f a =
+    case a of
+        HtmlAttribute htmlAttr ->
+            HtmlAttribute (Html.Attributes.map f htmlAttr)
+
+        StyleAttribute class ->
+            StyleAttribute class
+
+
+map : (a -> b) -> Html a -> Html b
+map f htmlA =
+    case htmlA of
+        Text content ->
+            Text content
+
+        Node tag attributes children ->
+            Node tag (List.map (mapAttribute f) attributes) (List.map (map f) children)
+
+
 text : String -> Html msg
 text content =
     Text content
@@ -70,11 +90,9 @@ toHtml styledHtml =
             ]
 
 
+
 -- beginnerProgram args =
 --     Html.beginnerProgram { args | view = \model -> styledToHtml <| args.view model }
-
-
-
 -- program args =
 --
 -- programWithFlags args =

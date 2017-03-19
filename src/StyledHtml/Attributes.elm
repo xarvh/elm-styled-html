@@ -10,6 +10,11 @@ import StyledHtml
         )
 
 
+map : (a -> b) -> Attribute a -> Attribute b
+map =
+    StyledHtml.mapAttribute
+
+
 class : Class -> Attribute msg
 class class =
     StyleAttribute class
