@@ -36,7 +36,13 @@ view =
         ]
         [ div
             [ A.class classHeader
-            , A.style [ "background-color: blue;" ] []
+            , A.style
+                [ "background-color: blue" ]
+                [ Css.hover
+                  [ "text-transform: uppercase"
+                  ]
+                  []
+                ]
             ]
             [ text "I am some text" ]
         , div
