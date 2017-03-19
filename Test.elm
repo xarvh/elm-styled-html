@@ -12,8 +12,8 @@ div =
     StyledHtml.node "div"
 
 
-text =
-    StyledHtml.makeClass "text"
+header =
+    StyledHtml.makeClass "header"
         [ "font-size: 20px"
         ]
         []
@@ -28,7 +28,7 @@ button =
             [ "background-color: purple"
             ]
             []
-        , StyledHtml.andClass text
+        , StyledHtml.andClass header
             [ "background-color: yellow"
             ]
             []
@@ -36,35 +36,36 @@ button =
 
 
 styles =
-    { text = text
+    { header = header
     , button = button
     }
 
 
 view =
     div
-        [ StyledHtml.inline [ "background-color: red;" ] []
+        -- StyledHtml.anonymous is going to re-calculate the hash every time, it might be slower than a named class
+        [ StyledHtml.anonymous [ "background-color: red;" ] []
         ]
         [ div
-            [ StyledHtml.useClass styles.text
-            , StyledHtml.inline [ "background-color: blue;" ] []
+            [ StyledHtml.useClass styles.header
+            , StyledHtml.anonymous [ "background-color: blue;" ] []
             ]
-            [ text "I am some text" ]
+            [ StyledHtml.text "I am some text" ]
         , div
             [ StyledHtml.useClass styles.button ]
-            [ text "I look like a button" ]
+            [ StyledHtml.text "I look like a button" ]
         ]
 
 
 main =
     let
-        ( content, style ) =
+        ( style, html ) =
             StyledHtml.getContentAndStyle view
+
+        q = Debug.log style ""
     in
         Html.div
             []
-            [ Html.node "style"
-                []
-                [ Html.text style ]
-            , content
+            [ Html.node "style" [] [ Html.text style ]
+            , html
             ]
