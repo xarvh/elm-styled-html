@@ -1,5 +1,8 @@
 module StyledHtml.Css exposing (..)
 
+import FNV
+import ParseInt
+import String
 import String.Extra
 import StyledHtml
     exposing
@@ -42,10 +45,11 @@ hover styleSnippets compositeRules =
     selector ":hover" styleSnippets compositeRules
 
 
-{-| TODO: use an actual hash function
+
+{-| TODO: implement ParseInt.toHex for speed and remove ParseInt dependency
 -}
 calculateHash =
-    String.length >> toString
+    FNV.hashString >> ParseInt.toHex >> String.toLower
 
 
 {-|
