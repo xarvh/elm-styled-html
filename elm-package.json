@@ -6,7 +6,12 @@
     "source-directories": [
         "src"
     ],
-    "exposed-modules": [],
+    "exposed-modules": [
+      "StyledHtml",
+      "StyledHtml.Attributes",
+      "StyledHtml.Css",
+      "StyledHtml.Events"
+    ],
     "dependencies": {
         "Skinney/fnv": "1.0.3 <= v < 2.0.0",
         "elm-community/string-extra": "1.3.1 <= v < 2.0.0",
