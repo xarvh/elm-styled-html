@@ -27,7 +27,7 @@ type alias Class =
 
 type Attribute msg
     = HtmlAttribute (Html.Attribute msg)
-    | StyleAttribute Class
+    | StyleAttribute (List Class)
 
 
 type Html msg
@@ -45,8 +45,8 @@ mapAttribute f a =
         HtmlAttribute htmlAttr ->
             HtmlAttribute (Html.Attributes.map f htmlAttr)
 
-        StyleAttribute class ->
-            StyleAttribute class
+        StyleAttribute classes ->
+            StyleAttribute classes
 
 
 map : (a -> b) -> Html a -> Html b
@@ -110,13 +110,16 @@ render rulesBySelector0 styledHtmlNode =
                         HtmlAttribute htmlAttribute ->
                             ( rulesBySelector, htmlAttribute :: htmlAttributes )
 
-                        StyleAttribute class ->
+                        StyleAttribute classes ->
                             let
                                 newRules =
-                                    Dict.insert class.name class rulesBySelector
+                                    List.foldl (\class d -> Dict.insert class.name class d) rulesBySelector classes
 
                                 htmlAttribute =
-                                    Html.Attributes.class class.name
+                                    classes
+                                        |> List.map .name
+                                        |> String.join " "
+                                        |> Html.Attributes.class
                             in
                                 ( newRules, htmlAttribute :: htmlAttributes )
 
