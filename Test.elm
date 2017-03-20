@@ -3,6 +3,7 @@ module Main exposing (..)
 import Html
 import StyledHtml exposing (div, text)
 import StyledHtml.Attributes as A
+import StyledHtml.Events as E
 import StyledHtml.Css as Css
 
 
@@ -35,7 +36,8 @@ view model =
         [ A.style [ "background-color: red;" ] []
         ]
         [ div
-            [ A.class classHeader
+            [ E.onClick ""
+            , A.class classHeader
             , A.style
                 [ "background-color: blue" ]
                 [ Css.hover
