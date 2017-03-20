@@ -1,6 +1,6 @@
 module StyledHtml.Events exposing (..)
 
-import StyledHtml exposing (Attribute(..))
+import StyledHtml.Private as Private exposing (Attribute)
 import Json.Decode as Json
 import VirtualDom
 
@@ -25,14 +25,14 @@ It really does help!
 -}
 on : String -> Json.Decoder msg -> Attribute msg
 on eventName decoder =
-    HtmlAttribute <| VirtualDom.on eventName decoder
+    Private.HtmlAttribute <| VirtualDom.on eventName decoder
 
 
 {-| Same as `on` but you can set a few options.
 -}
 onWithOptions : String -> Options -> Json.Decoder msg -> Attribute msg
 onWithOptions eventName options decoder =
-    HtmlAttribute <| VirtualDom.onWithOptions eventName options decoder
+    Private.HtmlAttribute <| VirtualDom.onWithOptions eventName options decoder
 
 
 

@@ -2,24 +2,18 @@ module StyledHtml.Attributes exposing (..)
 
 import Json.Encode as Json
 import StyledHtml.Css
-import StyledHtml
-    exposing
-        ( Attribute(..)
-        , Class
-        , StyleSnippet
-        , Rule
-        )
+import StyledHtml.Private as Private exposing (Attribute, Class, StyleSnippet, Rule)
 import VirtualDom
 
 
 map : (a -> b) -> Attribute a -> Attribute b
 map =
-    StyledHtml.mapAttribute
+    Private.mapAttribute
 
 
 class : Class -> Attribute msg
 class class =
-    StyleAttribute [ class ]
+    Private.StyleAttribute [ class ]
 
 
 classList : List ( Class, Bool ) -> Attribute msg
@@ -27,7 +21,7 @@ classList list =
     list
         |> List.filter Tuple.second
         |> List.map Tuple.first
-        |> StyleAttribute
+        |> Private.StyleAttribute
 
 
 style : List StyleSnippet -> List (List Rule) -> Attribute msg
@@ -58,7 +52,7 @@ Read more about the difference between properties and attributes [here][].
 -}
 property : String -> Json.Value -> Attribute msg
 property name value =
-    HtmlAttribute <| VirtualDom.property name value
+    Private.HtmlAttribute <| VirtualDom.property name value
 
 
 stringProperty : String -> String -> Attribute msg
@@ -81,7 +75,7 @@ Read more about the difference between properties and attributes [here][].
 -}
 attribute : String -> String -> Attribute msg
 attribute name value =
-    HtmlAttribute <| VirtualDom.attribute name value
+    Private.HtmlAttribute <| VirtualDom.attribute name value
 
 
 

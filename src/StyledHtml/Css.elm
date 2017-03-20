@@ -4,12 +4,7 @@ import FNV
 import ParseInt
 import String
 import String.Extra
-import StyledHtml
-    exposing
-        ( Class
-        , Rule
-        , StyleSnippet
-        )
+import StyledHtml.Private exposing (Class, Rule, StyleSnippet)
 
 
 extendSelector left right =
@@ -43,7 +38,6 @@ andClass class styleSnippets compositeRules =
 hover : List StyleSnippet -> List (List Rule) -> List Rule
 hover styleSnippets compositeRules =
     selector ":hover" styleSnippets compositeRules
-
 
 
 {-| TODO: implement ParseInt.toHex for speed and remove ParseInt dependency

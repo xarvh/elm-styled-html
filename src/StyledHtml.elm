@@ -1,76 +1,20 @@
 module StyledHtml exposing (..)
 
-import Dict exposing (Dict)
+import Dict
 import Html
-import Html.Attributes
-import String.Extra
+import StyledHtml.Private as Private
 
 
--- Primitives
+type alias Attribute msg =
+    Private.Attribute msg
 
 
-type alias StyleSnippet =
-    String
-
-
-type alias Rule =
-    { selector : String
-    , styleSnippets : List StyleSnippet
-    }
-
-
-type alias Class =
-    { name : String
-    , rules : String
-    }
-
-
-type Attribute msg
-    = HtmlAttribute (Html.Attribute msg)
-    | StyleAttribute (List Class)
-
-
-type Html msg
-    = Node String (List (Attribute msg)) (List (Html msg))
-    | Text String
+type alias Html msg =
+    Private.Html msg
 
 
 
--- elements
-
-
-mapAttribute : (a -> b) -> Attribute a -> Attribute b
-mapAttribute f a =
-    case a of
-        HtmlAttribute htmlAttr ->
-            HtmlAttribute (Html.Attributes.map f htmlAttr)
-
-        StyleAttribute classes ->
-            StyleAttribute classes
-
-
-map : (a -> b) -> Html a -> Html b
-map f htmlA =
-    case htmlA of
-        Text content ->
-            Text content
-
-        Node tag attributes children ->
-            Node tag (List.map (mapAttribute f) attributes) (List.map (map f) children)
-
-
-text : String -> Html msg
-text content =
-    Text content
-
-
-node : String -> List (Attribute msg) -> List (Html msg) -> Html msg
-node tag attributes children =
-    Node tag attributes children
-
-
-
--- programs
+-- styled html
 
 
 toHtml : Html msg -> Html.Html msg
@@ -86,6 +30,49 @@ toHtml styledHtml =
             ]
 
 
+renderStyleAndHtml : Html msg -> ( String, Html.Html msg )
+renderStyleAndHtml styledHtml =
+    let
+        ( rulesBySelector, html ) =
+            Private.render Dict.empty styledHtml
+
+        style =
+            rulesBySelector
+                |> Dict.values
+                |> List.map .rules
+                |> String.join "\n\n"
+    in
+        ( style, html )
+
+
+
+-- elements
+
+
+map : (a -> b) -> Html a -> Html b
+map f htmlA =
+    case htmlA of
+        Private.Text content ->
+            Private.Text content
+
+        Private.Node tag attributes children ->
+            Private.Node tag (List.map (Private.mapAttribute f) attributes) (List.map (map f) children)
+
+
+text : String -> Html msg
+text content =
+    Private.Text content
+
+
+node : String -> List (Attribute msg) -> List (Html msg) -> Html msg
+node tag attributes children =
+    Private.Node tag attributes children
+
+
+
+-- programs
+
+
 beginnerProgram args =
     Html.beginnerProgram { args | view = toHtml << args.view }
 
@@ -96,74 +83,6 @@ program args =
 
 programWithFlags args =
     Html.programWithFlags { args | view = toHtml << args.view }
-
-
-
--- main
-
-
-render : Dict String Class -> Html msg -> ( Dict String Class, Html.Html msg )
-render rulesBySelector0 styledHtmlNode =
-    case styledHtmlNode of
-        Text content ->
-            ( rulesBySelector0, Html.text content )
-
-        Node tagName styledAttributes styledChildren ->
-            let
-                -- Styled attributes contain both actual html attributes and style rules.
-                -- Here we get the actual html attributes and style rules from the styled attributes.
-                foldStyledAttribute styledAttribute ( rulesBySelector, htmlAttributes ) =
-                    case styledAttribute of
-                        HtmlAttribute htmlAttribute ->
-                            ( rulesBySelector, htmlAttribute :: htmlAttributes )
-
-                        StyleAttribute classes ->
-                            let
-                                newRules =
-                                    List.foldl (\class d -> Dict.insert class.name class d) rulesBySelector classes
-
-                                htmlAttribute =
-                                    classes
-                                        |> List.map .name
-                                        |> String.join " "
-                                        |> Html.Attributes.class
-                            in
-                                ( newRules, htmlAttribute :: htmlAttributes )
-
-                ( rulesBySelector1, htmlAttributes ) =
-                    List.foldr foldStyledAttribute ( rulesBySelector0, [] ) styledAttributes
-
-                -- Styled html contains both actual virtual dom nodes and style rules
-                foldChild styledChild ( rulesBySelector, htmlChildren ) =
-                    let
-                        ( newRules, htmlChild ) =
-                            render rulesBySelector styledChild
-                    in
-                        ( newRules, htmlChild :: htmlChildren )
-
-                -- TODO using rulesBySelectorX is a *terrible* idea
-                ( rulesBySelector2, htmlChildren ) =
-                    List.foldr foldChild ( rulesBySelector1, [] ) styledChildren
-
-                html =
-                    Html.node tagName htmlAttributes htmlChildren
-            in
-                ( rulesBySelector2, html )
-
-
-renderStyleAndHtml : Html msg -> ( String, Html.Html msg )
-renderStyleAndHtml styledHtml =
-    let
-        ( rulesBySelector, html ) =
-            render Dict.empty styledHtml
-
-        style =
-            rulesBySelector
-                |> Dict.values
-                |> List.map .rules
-                |> String.join "\n\n"
-    in
-        ( style, html )
 
 
 
