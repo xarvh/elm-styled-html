@@ -86,13 +86,20 @@ toHtml styledHtml =
             ]
 
 
+beginnerProgram args =
+    Html.beginnerProgram { args | view = toHtml << args.view }
 
--- beginnerProgram args =
---     Html.beginnerProgram { args | view = \model -> styledToHtml <| args.view model }
--- program args =
---
--- programWithFlags args =
--- rendering
+
+program args =
+    Html.program { args | view = toHtml << args.view }
+
+
+programWithFlags args =
+    Html.programWithFlags { args | view = toHtml << args.view }
+
+
+
+-- main
 
 
 render : Dict String Class -> Html msg -> ( Dict String Class, Html.Html msg )

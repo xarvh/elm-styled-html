@@ -29,7 +29,7 @@ classButton =
         ]
 
 
-view =
+view model =
     div
         -- A.style is going to re-calculate the hash every time, it might be slower than a named class
         [ A.style [ "background-color: red;" ] []
@@ -44,7 +44,9 @@ view =
                   []
                 ]
             ]
-            [ text "I am some text" ]
+            [ text "I am some text"
+            , text (toString model)
+            ]
         , div
             [ A.class classButton ]
             [ text "I look like a button" ]
@@ -52,4 +54,8 @@ view =
 
 
 main =
-    StyledHtml.toHtml view
+    StyledHtml.beginnerProgram
+      { model = 0
+      , update = \msg model -> model + 1
+      , view = view
+      }
