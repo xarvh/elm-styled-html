@@ -19,7 +19,7 @@ classButton =
         [ "padding: 10px"
         , "border: 1px solid blue"
         ]
-        [ Css.hover
+        [ Css.selector ":hover"
             [ "background-color: purple"
             ]
             []
@@ -40,7 +40,7 @@ view model =
             , A.class classHeader
             , A.style
                 [ "background-color: blue" ]
-                [ Css.hover
+                [ Css.selector ":hover"
                   [ "text-transform: uppercase"
                   ]
                   []

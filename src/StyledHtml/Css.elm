@@ -1,10 +1,21 @@
-module StyledHtml.Css exposing (..)
+module StyledHtml.Css
+    exposing
+        ( selector
+        , andClass
+        , makeClass
+        )
 
 import FNV
 import ParseInt
 import String
 import String.Extra
 import StyledHtml.Private exposing (Class, Rule, StyleSnippet)
+
+
+{-| TODO: implement ParseInt.toHex for speed and remove ParseInt dependency
+-}
+calculateHash =
+    FNV.hashString >> ParseInt.toHex >> String.toLower
 
 
 extendSelector left right =
@@ -33,17 +44,6 @@ selector selector styleSnippets compositeRules =
 andClass : Class -> List StyleSnippet -> List (List Rule) -> List Rule
 andClass class styleSnippets compositeRules =
     selector ("." ++ class.name) styleSnippets compositeRules
-
-
-hover : List StyleSnippet -> List (List Rule) -> List Rule
-hover styleSnippets compositeRules =
-    selector ":hover" styleSnippets compositeRules
-
-
-{-| TODO: implement ParseInt.toHex for speed and remove ParseInt dependency
--}
-calculateHash =
-    FNV.hashString >> ParseInt.toHex >> String.toLower
 
 
 {-|

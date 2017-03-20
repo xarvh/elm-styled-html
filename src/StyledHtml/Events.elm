@@ -4,6 +4,12 @@ import StyledHtml.Private as Private exposing (Attribute)
 import Json.Decode as Json
 import VirtualDom
 
+{-
+
+   Pretty much all this module is a verbatim copy of https://github.com/elm-lang/html/blob/2.0.0/src/Html/Events.elm
+   The only changes are `on` and `onWithOptions`.
+
+-}
 
 {-| Create a custom event listener. Normally this will not be necessary, but
 you have the power! Here is how `onClick` is defined for example:
@@ -36,11 +42,6 @@ onWithOptions eventName options decoder =
 
 
 
-{-
-
-   Stuff copied verbatim from https://github.com/elm-lang/html/blob/2.0.0/src/Html/Events.elm
-
--}
 -- MOUSE EVENTS
 
 
