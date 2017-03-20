@@ -1,10 +1,10 @@
 {
     "version": "1.0.0",
-    "summary": "Composable classes with hashed names for Elm",
+    "summary": "StyledHtml Example",
     "repository": "https://github.com/xarvh/elm-styled-html.git",
     "license": "GPL3",
     "source-directories": [
-        "src"
+        "../src"
     ],
     "exposed-modules": [],
     "dependencies": {
