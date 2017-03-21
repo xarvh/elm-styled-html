@@ -8,6 +8,8 @@ inspired by [css-modules](https://github.com/css-modules/css-modules) that autom
 * Makes unique both named and anonymous classes by adding a hash string of their content to their names.
 
 
+NOTE: This package is *experimental*. Expect bugs, awkward & changing interface and poor performance.
+
 
 ## How do I use it?
 

@@ -1,4 +1,155 @@
-module StyledHtml.Attributes exposing (..)
+module StyledHtml.Attributes
+    exposing
+        ( style
+        , property
+        , attribute
+        , map
+        , class
+        , classList
+        , id
+        , title
+        , hidden
+        , type_
+        , value
+        , defaultValue
+        , checked
+        , placeholder
+        , selected
+        , accept
+        , acceptCharset
+        , action
+        , autocomplete
+        , autofocus
+        , disabled
+        , enctype
+        , formaction
+        , list
+        , maxlength
+        , minlength
+        , method
+        , multiple
+        , name
+        , novalidate
+        , pattern
+        , readonly
+        , required
+        , size
+        , for
+        , form
+        , max
+        , min
+        , step
+        , cols
+        , rows
+        , wrap
+        , href
+        , target
+        , download
+        , downloadAs
+        , hreflang
+        , media
+        , ping
+        , rel
+        , ismap
+        , usemap
+        , shape
+        , coords
+        , src
+        , height
+        , width
+        , alt
+        , autoplay
+        , controls
+        , loop
+        , preload
+        , poster
+        , default
+        , kind
+        , srclang
+        , sandbox
+        , seamless
+        , srcdoc
+        , reversed
+        , start
+        , align
+        , colspan
+        , rowspan
+        , headers
+        , scope
+        , async
+        , charset
+        , content
+        , defer
+        , httpEquiv
+        , language
+        , scoped
+        , accesskey
+        , contenteditable
+        , contextmenu
+        , dir
+        , draggable
+        , dropzone
+        , itemprop
+        , lang
+        , spellcheck
+        , tabindex
+        , challenge
+        , keytype
+        , cite
+        , datetime
+        , pubdate
+        , manifest
+        )
+
+{-| This module works just like `Html.Attributes`.
+The only differences are in the `style`, `class` and `classList` functions.
+
+
+Please note that any reference to the `Attribute` type inside this module, refers to `StyledHtml.Attribute` NOT to `Html.Attribute`.
+
+
+# Stuff that is different
+@docs style, class, classList
+
+# Primitives
+@docs property, attribute, map
+# Super Common Attributes
+@docs id, title, hidden
+# Inputs
+@docs type_, value, defaultValue, checked, placeholder, selected
+## Input Helpers
+@docs accept, acceptCharset, action, autocomplete, autofocus,
+    disabled, enctype, formaction, list, maxlength, minlength, method, multiple,
+    name, novalidate, pattern, readonly, required, size, for, form
+## Input Ranges
+@docs max, min, step
+## Input Text Areas
+@docs cols, rows, wrap
+# Links and Areas
+@docs href, target, download, downloadAs, hreflang, media, ping, rel
+## Maps
+@docs ismap, usemap, shape, coords
+# Embedded Content
+@docs src, height, width, alt
+## Audio and Video
+@docs autoplay, controls, loop, preload, poster, default, kind, srclang
+## iframes
+@docs sandbox, seamless, srcdoc
+# Ordered Lists
+@docs reversed, start
+# Tables
+@docs align, colspan, rowspan, headers, scope
+# Header Stuff
+@docs async, charset, content, defer, httpEquiv, language, scoped
+# Less Common Global Attributes
+Attributes that can be attached to any HTML tag but are less commonly used.
+@docs accesskey, contenteditable, contextmenu, dir, draggable, dropzone,
+      itemprop, lang, spellcheck, tabindex
+# Key Generation
+@docs challenge, keytype
+# Miscellaneous
+@docs cite, datetime, pubdate, manifest
+-}
 
 import Json.Encode as Json
 import StyledHtml.Css
@@ -6,16 +157,24 @@ import StyledHtml.Private as Private exposing (Attribute, Class, StyleSnippet, R
 import VirtualDom
 
 
+{-|
+-}
 map : (a -> b) -> Attribute a -> Attribute b
 map =
     Private.mapAttribute
 
 
+{-| This function accepts only classes created with `StyledHtml.Css.makeClass`.
+
+If you want to use a string as class name, use `stringProperty "className" yourString` instead.
+-}
 class : Class -> Attribute msg
 class class =
     Private.StyleAttribute [ class ]
 
 
+{-| This function accepts only classes created with `StyledHtml.Css.makeClass`.
+-}
 classList : List ( Class, Bool ) -> Attribute msg
 classList list =
     list
@@ -24,6 +183,25 @@ classList list =
         |> Private.StyleAttribute
 
 
+{-| This is used to declare style inline with an element.
+Under the hood, it will create an anonymous hashed class.
+
+The first argument is the list of attributes.
+
+The second argument is a list nested rules.
+
+
+    div
+      [ StyledHtml.Attributes.style
+        [ "background-color: green"
+        , "text-transform: uppercase"
+        ]
+        [ StyledHtml.Css.selector ":hover"
+          [ "background-color: blue" ]
+          []
+        ]
+      ]
+-}
 style : List StyleSnippet -> List (List Rule) -> Attribute msg
 style styleSnippets compositeRules =
     class <| StyledHtml.Css.makeClass "_anon_" styleSnippets compositeRules

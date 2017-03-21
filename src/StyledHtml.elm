@@ -1,22 +1,106 @@
 module StyledHtml exposing (..)
 
+{-|
+
+This module contains everything you find in [elm-lang/html.Html](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html),
+including [Program](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform#Program)
+constructors and a handful other functions specific to Styled Html.
+
+Please note that any reference to the `Html` type inside this module, refers to `StyledHtml.Html` NOT to `Html.Html`.
+
+# Styled Html specific stuff
+@docs renderStyleAndHtml, toHtml
+
+# Primitives
+@docs Html, Attribute, text, node, map
+# Programs
+@docs beginnerProgram, program, programWithFlags
+# Tags
+## Headers
+@docs h1, h2, h3, h4, h5, h6
+## Grouping Content
+@docs div, p, hr, pre, blockquote
+## Text
+@docs span, a, code, em, strong, i, b, u, sub, sup, br
+## Lists
+@docs ol, ul, li, dl, dt, dd
+## Emdedded Content
+@docs img, iframe, canvas, math
+## Inputs
+@docs form, input, textarea, button, select, option
+## Sections
+@docs section, nav, article, aside, header, footer, address, main_, body
+## Figures
+@docs figure, figcaption
+## Tables
+@docs table, caption, colgroup, col, tbody, thead, tfoot, tr, td, th
+## Less Common Elements
+### Less Common Inputs
+@docs fieldset, legend, label, datalist, optgroup, keygen, output, progress, meter
+### Audio and Video
+@docs audio, video, source, track
+### Embedded Objects
+@docs embed, object, param
+### Text Edits
+@docs ins, del
+### Semantic Text
+@docs small, cite, dfn, abbr, time, var, samp, kbd, s, q
+### Less Common Text Tags
+@docs mark, ruby, rt, rp, bdi, bdo, wbr
+## Interactive Elements
+@docs details, summary, menuitem, menu
+
+-}
+
 import Dict
 import Html
 import StyledHtml.Private as Private
 
 
-type alias Attribute msg =
-    Private.Attribute msg
+{-| A Styled Html element.
+You use it exactly as a normal html element.
 
-
+    styledHtmlHello : Html msg
+    styledHtmlHello =
+      div [] [ text "Hello!" ]
+-}
 type alias Html msg =
     Private.Html msg
+
+
+{-| A Styled Html element attribute.
+You use it exactly as a normal html element attribute.
+-}
+type alias Attribute msg =
+    Private.Attribute msg
 
 
 
 -- styled html
 
 
+{-| Important: the function signature is actually:
+
+    toHtml : StyledHtml.Html msg -> Html.Html msg
+
+The two types of `Html` are different, but the generated Elm docs will confuse the two types.
+
+The function is a quick way to turn Styled Html into normal Html.
+
+    normalHtml : Html.Html
+    normalHtml =
+      StyledHtml.toHtml someStyledHtml
+
+The input html is wrapped inside a `div` together with a `style` tag:
+```
+<div>
+  <style>
+  ...generated CSS stylesheet goes here...
+  </style>
+  ..transformed someStyledHtml..
+</div>
+```
+-}
 toHtml : Html msg -> Html.Html msg
 toHtml styledHtml =
     let
@@ -30,6 +114,21 @@ toHtml styledHtml =
             ]
 
 
+{-| Important: the function signature is actually:
+
+    renderStyleAndHtml : StyledHtml.Html msg -> ( String, Html.Html msg )
+
+The two types of `Html` are different, but the generated Elm docs will confuse the two types.
+
+This function is the main algorithm of the library: it transforms styled html
+into CSS stylesheet and `Html.Html` tree.
+
+    ( stylesheet, html ) =
+      StyledHtml.renderStyleAndHtml <|
+        StyledHtml.div
+          [ StyledHtml.Attributes.class someStyleClass ]
+          [ StyledHtml.text "Some content" ]
+-}
 renderStyleAndHtml : Html msg -> ( String, Html.Html msg )
 renderStyleAndHtml styledHtml =
     let
@@ -49,6 +148,8 @@ renderStyleAndHtml styledHtml =
 -- elements
 
 
+{-|
+-}
 map : (a -> b) -> Html a -> Html b
 map f htmlA =
     case htmlA of
@@ -59,11 +160,15 @@ map f htmlA =
             Private.Node tag (List.map (Private.mapAttribute f) attributes) (List.map (map f) children)
 
 
+{-|
+-}
 text : String -> Html msg
 text content =
     Private.Text content
 
 
+{-|
+-}
 node : String -> List (Attribute msg) -> List (Html msg) -> Html msg
 node tag attributes children =
     Private.Node tag attributes children
@@ -73,14 +178,40 @@ node tag attributes children =
 -- programs
 
 
+{-|
+-}
+beginnerProgram :
+    { model : model
+    , view : model -> Html msg
+    , update : msg -> model -> model
+    }
+    -> Program Never model msg
 beginnerProgram args =
     Html.beginnerProgram { args | view = toHtml << args.view }
 
 
+{-|
+-}
+program :
+    { init : ( model, Cmd msg )
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
+    , view : model -> Html msg
+    }
+    -> Program Never model msg
 program args =
     Html.program { args | view = toHtml << args.view }
 
 
+{-|
+-}
+programWithFlags :
+    { init : flags -> ( model, Cmd msg )
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
+    , view : model -> Html msg
+    }
+    -> Program flags model msg
 programWithFlags args =
     Html.programWithFlags { args | view = toHtml << args.view }
 

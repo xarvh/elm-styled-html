@@ -1,8 +1,48 @@
-module StyledHtml.Events exposing (..)
+module StyledHtml.Events
+    exposing
+        ( onClick
+        , onDoubleClick
+        , onMouseDown
+        , onMouseUp
+        , onMouseEnter
+        , onMouseLeave
+        , onMouseOver
+        , onMouseOut
+        , onInput
+        , onCheck
+        , onSubmit
+        , onBlur
+        , onFocus
+        , on
+        , onWithOptions
+        , Options
+        , defaultOptions
+        , targetValue
+        , targetChecked
+        , keyCode
+        )
+
+{-| This module is pretty much the same as [Html.Events](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html-Events)
+
+# Mouse Helpers
+@docs onClick, onDoubleClick,
+      onMouseDown, onMouseUp,
+      onMouseEnter, onMouseLeave,
+      onMouseOver, onMouseOut
+# Form Helpers
+@docs onInput, onCheck, onSubmit
+# Focus Helpers
+@docs onBlur, onFocus
+# Custom Event Handlers
+@docs on, onWithOptions, Options, defaultOptions
+# Custom Decoders
+@docs targetValue, targetChecked, keyCode
+-}
 
 import StyledHtml.Private as Private exposing (Attribute)
 import Json.Decode as Json
 import VirtualDom
+
 
 {-
 
@@ -10,6 +50,7 @@ import VirtualDom
    The only changes are `on` and `onWithOptions`.
 
 -}
+
 
 {-| Create a custom event listener. Normally this will not be necessary, but
 you have the power! Here is how `onClick` is defined for example:
