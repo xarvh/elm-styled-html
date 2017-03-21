@@ -28,6 +28,7 @@ type Attribute msg
 
 type Html msg
     = Node String (List (Attribute msg)) (List (Html msg))
+    | Html (Html.Html msg)
     | Text String
 
 
@@ -46,6 +47,9 @@ render rulesBySelector0 styledHtmlNode =
     case styledHtmlNode of
         Text content ->
             ( rulesBySelector0, Html.text content )
+
+        Html html ->
+            ( rulesBySelector0, html )
 
         Node tagName styledAttributes styledChildren ->
             let

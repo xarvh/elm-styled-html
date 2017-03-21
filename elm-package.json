@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "summary": "Composable classes with hashed names for Elm",
     "repository": "https://github.com/xarvh/elm-styled-html.git",
     "license": "GPL3",
@@ -7,10 +7,10 @@
         "src"
     ],
     "exposed-modules": [
-      "StyledHtml",
-      "StyledHtml.Attributes",
-      "StyledHtml.Css",
-      "StyledHtml.Events"
+        "StyledHtml",
+        "StyledHtml.Attributes",
+        "StyledHtml.Css",
+        "StyledHtml.Events"
     ],
     "dependencies": {
         "Skinney/fnv": "1.0.3 <= v < 2.0.0",

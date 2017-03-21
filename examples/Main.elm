@@ -51,7 +51,10 @@ view model =
             ]
         , div
             [ A.class classButton ]
-            [ text "I look like a button" ]
+            [ text "I (don't) look like a button" ]
+        -- You can also include non-styled Html
+        , StyledHtml.fromHtml <|
+            Html.text "I am not Styled Html"
         ]
 
 

@@ -9,7 +9,7 @@ constructors and a handful other functions specific to Styled Html.
 Please note that any reference to the `Html` type inside this module, refers to `StyledHtml.Html` NOT to `Html.Html`.
 
 # Styled Html specific stuff
-@docs renderStyleAndHtml, toHtml
+@docs renderStyleAndHtml, fromHtml, toHtml
 
 # Primitives
 @docs Html, Attribute, text, node, map
@@ -77,6 +77,25 @@ type alias Attribute msg =
 
 
 -- styled html
+
+
+{-| Important: the function signature is actually:
+
+    fromHtml : Html.Html msg -> StyledHtml.Html msg
+
+The two types of `Html` are different, but the generated Elm docs will confuse the two types.
+
+The function converts your normal Html or Svg to Styled Html.
+
+    styledHtml =
+      StyledHtml.fromHtml <|
+        Html.div
+          []
+          [ Html.text "I am normal Html" ]
+-}
+fromHtml : Html.Html msg -> Html msg
+fromHtml html =
+    Private.Html html
 
 
 {-| Important: the function signature is actually:
@@ -155,6 +174,9 @@ map f htmlA =
     case htmlA of
         Private.Text content ->
             Private.Text content
+
+        Private.Html html ->
+            Private.Html (Html.map f html)
 
         Private.Node tag attributes children ->
             Private.Node tag (List.map (Private.mapAttribute f) attributes) (List.map (map f) children)
