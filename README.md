@@ -7,7 +7,7 @@ inspired by [css-modules](https://github.com/css-modules/css-modules) that autom
 * Replaces inline styling with *anonymous* classes, to reduce clutter and enable using pseudo-selectors.
 * Makes unique both named and anonymous classes by adding a hash string of their content to their names.
 
-```
+```elm
 redBackgroundClass =
     makeClass "redBackground"
         [ "background-color: #e00" ]
