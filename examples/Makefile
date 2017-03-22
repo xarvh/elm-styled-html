@@ -1,2 +1,3 @@
 default:
-	elm-make --yes Main.elm
+	elm-make --yes LargerExample.elm --output=LargerExample.html
+	elm-make --yes SmallerExample.elm --output=SmallerExample.html
