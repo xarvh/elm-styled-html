@@ -7,6 +7,31 @@ inspired by [css-modules](https://github.com/css-modules/css-modules) that autom
 * Replaces inline styling with *anonymous* classes, to reduce clutter and enable using pseudo-selectors.
 * Makes unique both named and anonymous classes by adding a hash string of their content to their names.
 
+```
+redBackgroundClass =
+    makeClass "redBackground"
+        [ "background-color: #e00" ]
+        []
+
+
+view model =
+    div
+        [ class redBackgroundClass ]
+        [ span
+            [ onClick 5
+            , style
+                [ "background-color: blue"
+                , "font-size: 30px"
+                ]
+                [ selector ":hover"
+                    [ "background-color: cyan" ]
+                    []
+                ]
+            ]
+            [ text (toString model) ]
+        ]
+```
+
 
 NOTE: This package is *experimental*. Expect bugs, awkward & changing interface and poor performance.
 
