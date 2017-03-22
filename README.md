@@ -7,8 +7,36 @@ inspired by [css-modules](https://github.com/css-modules/css-modules) that autom
 * Replaces inline styling with *anonymous* classes, to reduce clutter and enable using pseudo-selectors.
 * Makes unique both named and anonymous classes by adding a hash string of their content to their names.
 
+```elm
+redBackgroundClass =
+    makeClass "redBackground"
+        [ "background-color: #e00" ]
+        []
 
-NOTE: This package is *experimental*. Expect bugs, awkward & changing interface and poor performance.
+
+view model =
+    div
+        [ class redBackgroundClass ]
+        [ span
+            [ onClick 5
+            , style
+                [ "background-color: blue"
+                , "font-size: 30px"
+                ]
+                [ selector ":hover"
+                    [ "background-color: cyan" ]
+                    []
+                ]
+            ]
+            [ text (toString model) ]
+        ]
+```
+([See it running](https://xarvh.github.io/elm-styled-html/))
+
+
+## First, a warning
+
+This package is *experimental*. Expect bugs, awkward & changing interface and poor performance.
 
 
 ## How do I use it?
