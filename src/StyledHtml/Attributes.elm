@@ -230,7 +230,7 @@ Read more about the difference between properties and attributes [here][].
 -}
 property : String -> Json.Value -> Attribute msg
 property name value =
-    Private.HtmlAttribute <| VirtualDom.property name value
+    Private.VirtualDomProperty <| VirtualDom.property name value
 
 
 stringProperty : String -> String -> Attribute msg
@@ -253,7 +253,7 @@ Read more about the difference between properties and attributes [here][].
 -}
 attribute : String -> String -> Attribute msg
 attribute name value =
-    Private.HtmlAttribute <| VirtualDom.attribute name value
+    Private.VirtualDomProperty <| VirtualDom.attribute name value
 
 
 

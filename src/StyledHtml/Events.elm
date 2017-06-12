@@ -72,14 +72,14 @@ It really does help!
 -}
 on : String -> Json.Decoder msg -> Attribute msg
 on eventName decoder =
-    Private.HtmlAttribute <| VirtualDom.on eventName decoder
+    Private.VirtualDomProperty <| VirtualDom.on eventName decoder
 
 
 {-| Same as `on` but you can set a few options.
 -}
 onWithOptions : String -> Options -> Json.Decoder msg -> Attribute msg
 onWithOptions eventName options decoder =
-    Private.HtmlAttribute <| VirtualDom.onWithOptions eventName options decoder
+    Private.VirtualDomProperty <| VirtualDom.onWithOptions eventName options decoder
 
 
 

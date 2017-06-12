@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import AddStylesToDocumentHeader
 import StyledHtml exposing (..)
 import StyledHtml.Attributes exposing (class, style)
 import StyledHtml.Events exposing (onClick)
@@ -12,27 +13,47 @@ redBackgroundClass =
         []
 
 
-view model =
+greenBackgroundClass =
+    makeClass "greenBackground"
+        [ "background-color: #0e0" ]
+        []
+
+
+view ( showGreen, hasClass ) =
     div
         [ class redBackgroundClass ]
-        [ span
-            [ onClick 5
-            , style
-                [ "background-color: blue"
-                , "font-size: 30px"
-                ]
-                [ selector ":hover"
-                    [ "background-color: cyan" ]
-                    []
-                ]
+        [ div
+            []
+            [ if hasClass then
+                text "<head> now defines both .redBackground and .greenBackground"
+              else
+                text "<head> defines .redBackground, but not .greenBackground"
             ]
-            [ text (toString model) ]
+        , button
+            [ onClick (not showGreen) ]
+            [ text "Click me to toggle the green div!" ]
+        , div
+            [ class redBackgroundClass ]
+            [ text "Hello! I have .redBackground!" ]
+        , if showGreen then
+            div
+                [ class greenBackgroundClass ]
+                [ text "Hi! I have .greenBackground!" ]
+          else
+            text ""
         ]
 
 
+init : {} -> ( ( Bool, Bool ), Cmd msg )
+init _ =
+    ( ( False, False ), Cmd.none )
+
+
 main =
-    beginnerProgram
-        { model = 0
-        , update = \msg model -> model + msg
+    programWithFlags
+        { init = init
+        , update = \msg ( showGreen, hasClass ) -> ( ( not showGreen, True ), Cmd.none )
         , view = view
+        , subscriptions = always Sub.none
+        , addStyles = AddStylesToDocumentHeader.addStylesToDocumentHeader
         }

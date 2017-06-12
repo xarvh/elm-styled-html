@@ -1,60 +1,129 @@
 module StyledHtml exposing (..)
 
-{-|
-
-This module contains everything you find in [elm-lang/html.Html](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html),
+{-| This module contains everything you find in [elm-lang/html.Html](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html),
 including [Program](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform#Program)
 constructors and a handful other functions specific to Styled Html.
 
-Please note that any reference to the `Html` type inside this module, refers to `StyledHtml.Html` NOT to `Html.Html`.
+
+## IMPORTANT
+
+Within this module, any reference to `Html` refers to `StyledHtml.Html`, NOT to the vanilla `Html.Html` you are used to.
+To remove any ambiguity, `Html.Html` will *always* be referred as `VanillaHtml`
+
 
 # Styled Html specific stuff
-@docs renderStyleAndHtml, fromHtml, toHtml
+
+@docs toStyleAndHtml, fromHtml
+
 
 # Primitives
+
 @docs Html, Attribute, text, node, map
+
+
 # Programs
+
 @docs beginnerProgram, program, programWithFlags
+
+
 # Tags
+
+
 ## Headers
+
 @docs h1, h2, h3, h4, h5, h6
+
+
 ## Grouping Content
+
 @docs div, p, hr, pre, blockquote
+
+
 ## Text
+
 @docs span, a, code, em, strong, i, b, u, sub, sup, br
+
+
 ## Lists
+
 @docs ol, ul, li, dl, dt, dd
+
+
 ## Emdedded Content
+
 @docs img, iframe, canvas, math
+
+
 ## Inputs
+
 @docs form, input, textarea, button, select, option
+
+
 ## Sections
+
 @docs section, nav, article, aside, header, footer, address, main_, body
+
+
 ## Figures
+
 @docs figure, figcaption
+
+
 ## Tables
+
 @docs table, caption, colgroup, col, tbody, thead, tfoot, tr, td, th
+
+
 ## Less Common Elements
+
+
 ### Less Common Inputs
+
 @docs fieldset, legend, label, datalist, optgroup, keygen, output, progress, meter
+
+
 ### Audio and Video
+
 @docs audio, video, source, track
+
+
 ### Embedded Objects
+
 @docs embed, object, param
+
+
 ### Text Edits
+
 @docs ins, del
+
+
 ### Semantic Text
+
 @docs small, cite, dfn, abbr, time, var, samp, kbd, s, q
+
+
 ### Less Common Text Tags
+
 @docs mark, ruby, rt, rp, bdi, bdo, wbr
+
+
 ## Interactive Elements
+
 @docs details, summary, menuitem, menu
 
 -}
 
 import Dict
-import Html
+import Html as VanillaHtml
+import VirtualDom
 import StyledHtml.Private as Private
+
+
+{-| To remove any ambiguity, the Html type that comes from the default `Html` package (ie, elm-lang/html)
+is always referenced with this alias.
+-}
+type alias VanillaHtml msg =
+    VanillaHtml.Html msg
 
 
 {-| A Styled Html element.
@@ -62,7 +131,8 @@ You use it exactly as a normal html element.
 
     styledHtmlHello : Html msg
     styledHtmlHello =
-      div [] [ text "Hello!" ]
+        div [] [ text "Hello!" ]
+
 -}
 type alias Html msg =
     Private.Html msg
@@ -79,77 +149,32 @@ type alias Attribute msg =
 -- styled html
 
 
-{-| Important: the function signature is actually:
-
-    fromHtml : Html.Html msg -> StyledHtml.Html msg
-
-The two types of `Html` are different, but the generated Elm docs will confuse the two types.
-
-The function converts your normal Html or Svg to Styled Html.
+{-| The function converts your vanilla Html or Svg to Styled Html.
 
     styledHtml =
-      StyledHtml.fromHtml <|
-        Html.div
-          []
-          [ Html.text "I am normal Html" ]
+        StyledHtml.fromHtml <|
+            VanillaHtml.div
+                []
+                [ Html.text "I am normal Html" ]
+
 -}
-fromHtml : Html.Html msg -> Html msg
+fromHtml : VanillaHtml msg -> Html msg
 fromHtml html =
-    Private.Html html
+    Private.VirtualDomNode html
 
 
-{-| Important: the function signature is actually:
+{-| This function is the main algorithm of the library: it transforms Styled Html
+into a CSS stylesheet and a `VanillaHtml` tree.
 
-    toHtml : StyledHtml.Html msg -> Html.Html msg
+    ( stylesheet, vanillaHtml ) =
+        StyledHtml.toStyleAndHtml <|
+            StyledHtml.div
+                [ StyledHtml.Attributes.class someStyleClass ]
+                [ StyledHtml.text "Some content" ]
 
-The two types of `Html` are different, but the generated Elm docs will confuse the two types.
-
-The function is a quick way to turn Styled Html into normal Html.
-
-    normalHtml : Html.Html
-    normalHtml =
-      StyledHtml.toHtml someStyledHtml
-
-The input html is wrapped inside a `div` together with a `style` tag:
-```
-<div>
-  <style>
-  ...generated CSS stylesheet goes here...
-  </style>
-  ..transformed someStyledHtml..
-</div>
-```
 -}
-toHtml : Html msg -> Html.Html msg
-toHtml styledHtml =
-    let
-        ( style, html ) =
-            renderStyleAndHtml styledHtml
-    in
-        Html.div
-            []
-            [ Html.node "style" [] [ Html.text style ]
-            , html
-            ]
-
-
-{-| Important: the function signature is actually:
-
-    renderStyleAndHtml : StyledHtml.Html msg -> ( String, Html.Html msg )
-
-The two types of `Html` are different, but the generated Elm docs will confuse the two types.
-
-This function is the main algorithm of the library: it transforms styled html
-into CSS stylesheet and `Html.Html` tree.
-
-    ( stylesheet, html ) =
-      StyledHtml.renderStyleAndHtml <|
-        StyledHtml.div
-          [ StyledHtml.Attributes.class someStyleClass ]
-          [ StyledHtml.text "Some content" ]
--}
-renderStyleAndHtml : Html msg -> ( String, Html.Html msg )
-renderStyleAndHtml styledHtml =
+toStyleAndHtml : Html msg -> ( String, VanillaHtml msg )
+toStyleAndHtml styledHtml =
     let
         ( rulesBySelector, html ) =
             Private.render Dict.empty styledHtml
@@ -167,75 +192,73 @@ renderStyleAndHtml styledHtml =
 -- elements
 
 
-{-|
--}
+{-| -}
 map : (a -> b) -> Html a -> Html b
 map f htmlA =
     case htmlA of
         Private.Text content ->
             Private.Text content
 
-        Private.Html html ->
-            Private.Html (Html.map f html)
+        Private.VirtualDomNode html ->
+            Private.VirtualDomNode (VirtualDom.map f html)
 
-        Private.Node tag attributes children ->
-            Private.Node tag (List.map (Private.mapAttribute f) attributes) (List.map (map f) children)
+        Private.StyledHtmlNode tag attributes children ->
+            Private.StyledHtmlNode tag (List.map (Private.mapAttribute f) attributes) (List.map (map f) children)
 
 
-{-|
--}
+{-| -}
 text : String -> Html msg
 text content =
     Private.Text content
 
 
-{-|
--}
+{-| -}
 node : String -> List (Attribute msg) -> List (Html msg) -> Html msg
 node tag attributes children =
-    Private.Node tag attributes children
+    Private.StyledHtmlNode tag attributes children
 
 
 
 -- programs
 
 
-{-|
+{-| TODO
+
+  remove beginnerProgram entirely from here
+
 -}
+addStyles styles =
+    let
+        q =
+            if styles /= [] then
+                Debug.log "+" styles
+            else
+                styles
+    in
+        Cmd.none
+
+
 beginnerProgram :
     { model : model
     , view : model -> Html msg
     , update : msg -> model -> model
     }
-    -> Program Never model msg
+    -> Program {} (Private.ProgramModel model msg) msg
 beginnerProgram args =
-    Html.beginnerProgram { args | view = toHtml << args.view }
-
-
-{-|
--}
-program :
-    { init : ( model, Cmd msg )
-    , update : msg -> model -> ( model, Cmd msg )
-    , subscriptions : model -> Sub msg
-    , view : model -> Html msg
+    { init = \flags -> ( args.model, Cmd.none )
+    , update = \msg model -> ( args.update msg model, Cmd.none )
+    , subscriptions = always Sub.none
+    , view = args.view
+    , addStyles = addStyles
     }
-    -> Program Never model msg
-program args =
-    Html.program { args | view = toHtml << args.view }
+        |> Private.makeProgram
+        |> VirtualDom.programWithFlags
 
 
-{-|
--}
-programWithFlags :
-    { init : flags -> ( model, Cmd msg )
-    , update : msg -> model -> ( model, Cmd msg )
-    , subscriptions : model -> Sub msg
-    , view : model -> Html msg
-    }
-    -> Program flags model msg
-programWithFlags args =
-    Html.programWithFlags { args | view = toHtml << args.view }
+
+programWithFlags =
+  Private.makeProgram >> VirtualDom.programWithFlags
+
 
 
 

@@ -4,6 +4,7 @@
     "repository": "https://github.com/xarvh/elm-styled-html.git",
     "license": "GPL3",
     "source-directories": [
+        "../ports",
         "../src"
     ],
     "exposed-modules": [],
