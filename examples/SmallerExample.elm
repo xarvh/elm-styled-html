@@ -44,14 +44,9 @@ view ( showGreen, hasClass ) =
         ]
 
 
-init : {} -> ( ( Bool, Bool ), Cmd msg )
-init _ =
-    ( ( False, False ), Cmd.none )
-
-
 main =
-    programWithFlags
-        { init = init
+    program
+        { init = ( ( False, False ), Cmd.none )
         , update = \msg ( showGreen, hasClass ) -> ( ( not showGreen, True ), Cmd.none )
         , view = view
         , subscriptions = always Sub.none

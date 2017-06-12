@@ -107,8 +107,8 @@ type alias ProgramModel userModel msg =
     }
 
 
-something : Set String -> Dict String Class -> ( Set String, List String )
-something selectorsAlreadyAdded rulesBySelectors =
+makeStyles : Set String -> Dict String Class -> ( Set String, List String )
+makeStyles selectorsAlreadyAdded rulesBySelectors =
     let
         selectorsAndRulesToAdd =
             rulesBySelectors
@@ -139,7 +139,7 @@ wrappingModelAndCmd addStyles view oldAddedCssSelectors ( userModel, userCmd ) =
             render Dict.empty (view userModel)
 
         ( addedCssSelectors, stylesToAdd ) =
-            something oldAddedCssSelectors style
+            makeStyles oldAddedCssSelectors style
 
         wrappingModel =
             { viewAsVanillaHtml = viewAsVanillaHtml
@@ -157,37 +157,3 @@ wrappingModelAndCmd addStyles view oldAddedCssSelectors ( userModel, userCmd ) =
             Cmd.batch [ addStylesCmd, userCmd ]
     in
         ( wrappingModel, cmd )
-
-
-makeProgram :
-    { init : flags -> ( userModel, Cmd msg )
-    , update : msg -> userModel -> ( userModel, Cmd msg )
-    , subscriptions : userModel -> Sub msg
-    , view : userModel -> Html msg
-    , addStyles : List String -> Cmd msg
-    }
-    ->
-        { init : flags -> ( ProgramModel userModel msg, Cmd msg )
-        , update : msg -> ProgramModel userModel msg -> ( ProgramModel userModel msg, Cmd msg )
-        , subscriptions : ProgramModel userModel msg -> Sub msg
-        , view : ProgramModel userModel msg -> VanillaHtml.Html msg
-        }
-makeProgram args =
-    let
-        init flags =
-            wrappingModelAndCmd args.addStyles args.view Set.empty (args.init flags)
-
-        update msg programModel =
-            wrappingModelAndCmd args.addStyles args.view programModel.addedCssSelectors (args.update msg programModel.userModel)
-
-        view programModel =
-            programModel.viewAsVanillaHtml
-
-        subscriptions programModel =
-            args.subscriptions programModel.userModel
-    in
-        { init = init
-        , update = update
-        , view = view
-        , subscriptions = subscriptions
-        }

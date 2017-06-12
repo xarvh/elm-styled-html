@@ -13,17 +13,17 @@ To remove any ambiguity, `Html.Html` will *always* be referred as `VanillaHtml`
 
 # Styled Html specific stuff
 
-@docs toStyleAndHtml, fromHtml
+@docs Html, VanillaHtml, toStyleAndVanillaHtml, fromVanillaHtml
 
 
 # Primitives
 
-@docs Html, Attribute, text, node, map
+@docs Attribute, text, node, map
 
 
 # Programs
 
-@docs beginnerProgram, program, programWithFlags
+@docs StyledHtmlProgram, program, programWithFlags, makeProgram
 
 
 # Tags
@@ -116,7 +116,8 @@ To remove any ambiguity, `Html.Html` will *always* be referred as `VanillaHtml`
 import Dict
 import Html as VanillaHtml
 import VirtualDom
-import StyledHtml.Private as Private
+import Set exposing (Set)
+import StyledHtml.Private as Private exposing (ProgramModel)
 
 
 {-| To remove any ambiguity, the Html type that comes from the default `Html` package (ie, elm-lang/html)
@@ -152,14 +153,14 @@ type alias Attribute msg =
 {-| The function converts your vanilla Html or Svg to Styled Html.
 
     styledHtml =
-        StyledHtml.fromHtml <|
+        StyledHtml.fromVanillaHtml <|
             VanillaHtml.div
                 []
                 [ Html.text "I am normal Html" ]
 
 -}
-fromHtml : VanillaHtml msg -> Html msg
-fromHtml html =
+fromVanillaHtml : VanillaHtml msg -> Html msg
+fromVanillaHtml html =
     Private.VirtualDomNode html
 
 
@@ -167,14 +168,14 @@ fromHtml html =
 into a CSS stylesheet and a `VanillaHtml` tree.
 
     ( stylesheet, vanillaHtml ) =
-        StyledHtml.toStyleAndHtml <|
+        StyledHtml.toStyleAndVanillaHtml <|
             StyledHtml.div
                 [ StyledHtml.Attributes.class someStyleClass ]
                 [ StyledHtml.text "Some content" ]
 
 -}
-toStyleAndHtml : Html msg -> ( String, VanillaHtml msg )
-toStyleAndHtml styledHtml =
+toStyleAndVanillaHtml : Html msg -> ( String, VanillaHtml msg )
+toStyleAndVanillaHtml styledHtml =
     let
         ( rulesBySelector, html ) =
             Private.render Dict.empty styledHtml
@@ -222,43 +223,97 @@ node tag attributes children =
 -- programs
 
 
-{-| TODO
+{-| This is an alias to wrap nicely some of the internals used by StyledHtml, but it's still a `Program`
+-}
+type alias StyledHtmlProgram flags model msg =
+    Program flags (Private.ProgramModel model msg) msg
 
-  remove beginnerProgram entirely from here
+
+{-| This works exactly like Html.programWithFlags, the only difference is that you need
+to pass a `port` to add the styles to the header.
+
+You can use those provided in the `ports/` directory.
 
 -}
-addStyles styles =
-    let
-        q =
-            if styles /= [] then
-                Debug.log "+" styles
-            else
-                styles
-    in
-        Cmd.none
-
-
-beginnerProgram :
-    { model : model
+programWithFlags :
+    { init : flags -> ( model, Cmd msg )
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
     , view : model -> Html msg
-    , update : msg -> model -> model
+    , addStyles : List String -> Cmd msg
     }
-    -> Program {} (Private.ProgramModel model msg) msg
-beginnerProgram args =
-    { init = \flags -> ( args.model, Cmd.none )
-    , update = \msg model -> ( args.update msg model, Cmd.none )
-    , subscriptions = always Sub.none
-    , view = args.view
-    , addStyles = addStyles
-    }
-        |> Private.makeProgram
-        |> VirtualDom.programWithFlags
-
-
-
+    -> StyledHtmlProgram flags model msg
 programWithFlags =
-  Private.makeProgram >> VirtualDom.programWithFlags
+    makeProgram >> VirtualDom.programWithFlags
 
+
+{-| This works exactly like Html.program, the only difference is that you need
+to pass a `port` to add the styles to the header.
+
+You can use those provided in the `ports/` directory.
+
+-}
+program :
+    { init : ( model, Cmd msg )
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
+    , view : model -> Html msg
+    , addStyles : List String -> Cmd msg
+    }
+    -> StyledHtmlProgram {} model msg
+program args =
+    let
+        init : {} -> ( model, Cmd msg )
+        init =
+            always args.init
+    in
+        { init = init
+        , update = args.update
+        , subscriptions = args.subscriptions
+        , view = args.view
+        , addStyles = args.addStyles
+        }
+            |> makeProgram
+            |> VirtualDom.programWithFlags
+
+
+{-| If you need more control on how your `Program` is created, you can use this function.
+
+It transforms the functions for a Styled Html program into those for a Vanilla Html programs.
+
+-}
+makeProgram :
+    { init : flags -> ( userModel, Cmd msg )
+    , update : msg -> userModel -> ( userModel, Cmd msg )
+    , subscriptions : userModel -> Sub msg
+    , view : userModel -> Html msg
+    , addStyles : List String -> Cmd msg
+    }
+    ->
+        { init : flags -> ( ProgramModel userModel msg, Cmd msg )
+        , update : msg -> ProgramModel userModel msg -> ( ProgramModel userModel msg, Cmd msg )
+        , subscriptions : ProgramModel userModel msg -> Sub msg
+        , view : ProgramModel userModel msg -> VanillaHtml.Html msg
+        }
+makeProgram args =
+    let
+        init flags =
+            Private.wrappingModelAndCmd args.addStyles args.view Set.empty (args.init flags)
+
+        update msg programModel =
+            Private.wrappingModelAndCmd args.addStyles args.view programModel.addedCssSelectors (args.update msg programModel.userModel)
+
+        view programModel =
+            programModel.viewAsVanillaHtml
+
+        subscriptions programModel =
+            args.subscriptions programModel.userModel
+    in
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
 
 
 
