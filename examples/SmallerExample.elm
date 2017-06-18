@@ -21,24 +21,24 @@ greenBackgroundClass =
 
 view ( showGreen, hasClass ) =
     div
-        [ class redBackgroundClass ]
+        []
         [ div
             []
             [ if hasClass then
-                text "<head> now defines both .redBackground and .greenBackground"
+                text "The document header now defines both .redBackground and .greenBackground"
               else
-                text "<head> defines .redBackground, but not .greenBackground"
+                text "The document header defines .redBackground, but not .greenBackground"
             ]
         , button
             [ onClick (not showGreen) ]
             [ text "Click me to toggle the green div!" ]
         , div
             [ class redBackgroundClass ]
-            [ text "Hello! I have .redBackground!" ]
+            [ text "This div has .redBackground!" ]
         , if showGreen then
             div
                 [ class greenBackgroundClass ]
-                [ text "Hi! I have .greenBackground!" ]
+                [ text "This div has .greenBackground!" ]
           else
             text ""
         ]

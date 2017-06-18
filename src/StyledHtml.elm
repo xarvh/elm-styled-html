@@ -7,7 +7,7 @@ constructors and a handful other functions specific to Styled Html.
 
 ## IMPORTANT
 
-Within this module, any reference to `Html` refers to `StyledHtml.Html`, NOT to the vanilla `Html.Html` you are used to.
+Within this module, `Html` refers to `StyledHtml.Html`, NOT to the vanilla `Html.Html` you are used to.
 To remove any ambiguity, `Html.Html` will *always* be referred as `VanillaHtml`
 
 
@@ -16,14 +16,14 @@ To remove any ambiguity, `Html.Html` will *always* be referred as `VanillaHtml`
 @docs Html, VanillaHtml, toStyleAndVanillaHtml, fromVanillaHtml
 
 
+# Programs
+
+@docs StyledHtmlProgram, program, programWithFlags, programFunctions
+
+
 # Primitives
 
 @docs Attribute, text, node, map
-
-
-# Programs
-
-@docs StyledHtmlProgram, program, programWithFlags, makeProgram
 
 
 # Tags
@@ -223,16 +223,16 @@ node tag attributes children =
 -- programs
 
 
-{-| This is an alias to wrap nicely some of the internals used by StyledHtml, but it's still a `Program`
+{-| This is an alias to nicely wrap some of the internals used by StyledHtml, but under the hood it's still a `Program`.
 -}
 type alias StyledHtmlProgram flags model msg =
     Program flags (Private.ProgramModel model msg) msg
 
 
 {-| This works exactly like Html.programWithFlags, the only difference is that you need
-to pass a `port` to add the styles to the header.
+to pass a `port` that adds the styles to the header.
 
-You can use those provided in the `ports/` directory.
+You can use the port provided in the `ports/` directory.
 
 -}
 programWithFlags :
@@ -244,13 +244,13 @@ programWithFlags :
     }
     -> StyledHtmlProgram flags model msg
 programWithFlags =
-    makeProgram >> VirtualDom.programWithFlags
+    programFunctions >> VirtualDom.programWithFlags
 
 
 {-| This works exactly like Html.program, the only difference is that you need
-to pass a `port` to add the styles to the header.
+to pass a `port` that adds the styles to the header.
 
-You can use those provided in the `ports/` directory.
+You can use the port provided in the `ports/` directory.
 
 -}
 program :
@@ -273,16 +273,14 @@ program args =
         , view = args.view
         , addStyles = args.addStyles
         }
-            |> makeProgram
+            |> programFunctions
             |> VirtualDom.programWithFlags
 
 
-{-| If you need more control on how your `Program` is created, you can use this function.
-
-It transforms the functions for a Styled Html program into those for a Vanilla Html programs.
-
+{-| If you need more control on how your `Program` is created, you can use this function:
+it transforms the functions that define a Styled Html Program into those that define a Vanilla Html Program.
 -}
-makeProgram :
+programFunctions :
     { init : flags -> ( userModel, Cmd msg )
     , update : msg -> userModel -> ( userModel, Cmd msg )
     , subscriptions : userModel -> Sub msg
@@ -295,7 +293,7 @@ makeProgram :
         , subscriptions : ProgramModel userModel msg -> Sub msg
         , view : ProgramModel userModel msg -> VanillaHtml.Html msg
         }
-makeProgram args =
+programFunctions args =
     let
         init flags =
             Private.wrappingModelAndCmd args.addStyles args.view Set.empty (args.init flags)
