@@ -7,25 +7,25 @@ import Set exposing (Set)
 import VirtualDom
 
 
-type alias StyleSnippet =
+type alias Declaration =
     String
 
 
 type alias Rule =
     { selector : String
-    , styleSnippets : List StyleSnippet
+    , declarations : List Declaration
     }
 
 
-type alias Class =
-    { name : String
+type alias Ruleset =
+    { className : String
     , rules : String
     }
 
 
 type Attribute msg
     = VirtualDomProperty (VirtualDom.Property msg)
-    | StyleAttribute (List Class)
+    | StyleAttribute (List Ruleset)
 
 
 type Html msg
@@ -40,60 +40,59 @@ mapAttribute f a =
         VirtualDomProperty nodeProperty ->
             VirtualDomProperty (VirtualDom.mapProperty f nodeProperty)
 
-        StyleAttribute classes ->
-            StyleAttribute classes
+        StyleAttribute rulesets ->
+            StyleAttribute rulesets
 
 
-render : Dict String Class -> Html msg -> ( Dict String Class, VirtualDom.Node msg )
-render rulesBySelector0 styledHtmlNode =
+render : Dict String Ruleset -> Html msg -> ( Dict String Ruleset, VirtualDom.Node msg )
+render oldRulesetsByClassName styledHtmlNode =
     case styledHtmlNode of
         Text content ->
-            ( rulesBySelector0, VirtualDom.text content )
+            ( oldRulesetsByClassName, VirtualDom.text content )
 
         VirtualDomNode node ->
-            ( rulesBySelector0, node )
+            ( oldRulesetsByClassName, node )
 
         StyledHtmlNode tagName styledAttributes styledChildren ->
             let
                 -- Styled attributes contain both actual virtual dom attributes and style rules.
                 -- Here we get the actual virtual dom attributes and style rules from the styled attributes.
-                foldStyledAttribute styledAttribute ( rulesBySelector, nodeAttributes ) =
-                    case styledAttribute of
+                foldAttribute attribute ( rulesetsByClassName, nodeProperties ) =
+                    case attribute of
                         VirtualDomProperty property ->
-                            ( rulesBySelector, property :: nodeAttributes )
+                            ( rulesetsByClassName, property :: nodeProperties )
 
-                        StyleAttribute classes ->
+                        StyleAttribute rulesets ->
                             let
                                 newRules =
-                                    List.foldl (\class d -> Dict.insert class.name class d) rulesBySelector classes
+                                    List.foldl (\ruleset d -> Dict.insert ruleset.className ruleset d) rulesetsByClassName rulesets
 
                                 property =
-                                    classes
-                                        |> List.map .name
+                                    rulesets
+                                        |> List.map .className
                                         |> String.join " "
                                         |> VanillaHtmlAttributes.class
                             in
-                                ( newRules, property :: nodeAttributes )
+                                ( newRules, property :: nodeProperties )
 
-                ( rulesBySelector1, nodeAttributes ) =
-                    List.foldr foldStyledAttribute ( rulesBySelector0, [] ) styledAttributes
+                ( partialRulesetsByClassName, nodeProperties ) =
+                    List.foldr foldAttribute ( oldRulesetsByClassName, [] ) styledAttributes
 
                 -- Styled html contains both actual virtual dom nodes and style rules
-                foldChild styledChild ( rulesBySelector, nodeChildren ) =
+                foldChild styledChild ( rulesetsByClassName, nodeChildren ) =
                     let
                         ( newRules, nodeChild ) =
-                            render rulesBySelector styledChild
+                            render rulesetsByClassName styledChild
                     in
                         ( newRules, nodeChild :: nodeChildren )
 
-                -- TODO rulesBySelectorX is a *terrible* name
-                ( rulesBySelector2, nodeChildren ) =
-                    List.foldr foldChild ( rulesBySelector1, [] ) styledChildren
+                ( newRulesetsByClassName, nodeChildren ) =
+                    List.foldr foldChild ( partialRulesetsByClassName, [] ) styledChildren
 
                 node =
-                    VirtualDom.node tagName nodeAttributes nodeChildren
+                    VirtualDom.node tagName nodeProperties nodeChildren
             in
-                ( rulesBySelector2, node )
+                ( newRulesetsByClassName, node )
 
 
 
@@ -102,29 +101,29 @@ render rulesBySelector0 styledHtmlNode =
 
 type alias ProgramModel userModel msg =
     { viewAsVanillaHtml : VanillaHtml.Html msg
-    , addedCssSelectors : Set String
+    , namesOfRulesetsAlreadyAdded : Set String
     , userModel : userModel
     }
 
 
-makeStyles : Set String -> Dict String Class -> ( Set String, List String )
-makeStyles selectorsAlreadyAdded rulesBySelectors =
+makeStyles : Set String -> Dict String Ruleset -> ( Set String, List String )
+makeStyles namesOfRulesetsAlreadyAdded rulesetsByClassName =
     let
-        selectorsAndRulesToAdd =
-            rulesBySelectors
+        classNamesAndRulesToAdd =
+            rulesetsByClassName
                 |> Dict.toList
-                |> List.filter (\( selector, rules ) -> not <| Set.member selector selectorsAlreadyAdded)
+                |> List.filter (\( className, ruleset ) -> not <| Set.member className namesOfRulesetsAlreadyAdded)
 
-        stylesToAdd =
-            selectorsAndRulesToAdd
-                |> List.map (\( selector, class ) -> class.rules)
+        rulesToBeAdded =
+            classNamesAndRulesToAdd
+                |> List.map (\( className, ruleset ) -> ruleset.rules)
 
-        selectorsToAdd =
-            selectorsAndRulesToAdd
+        namesOfRulesetsToBeAdded =
+            classNamesAndRulesToAdd
                 |> List.map Tuple.first
                 |> Set.fromList
     in
-        ( Set.union selectorsToAdd selectorsAlreadyAdded, stylesToAdd )
+        ( Set.union namesOfRulesetsToBeAdded namesOfRulesetsAlreadyAdded, rulesToBeAdded )
 
 
 wrappingModelAndCmd :
@@ -138,20 +137,20 @@ wrappingModelAndCmd addStyles view oldAddedCssSelectors ( userModel, userCmd ) =
         ( style, viewAsVanillaHtml ) =
             render Dict.empty (view userModel)
 
-        ( addedCssSelectors, stylesToAdd ) =
+        ( namesOfAddedRulesets, rulesToBeAdded ) =
             makeStyles oldAddedCssSelectors style
 
         wrappingModel =
             { viewAsVanillaHtml = viewAsVanillaHtml
-            , addedCssSelectors = addedCssSelectors
+            , namesOfRulesetsAlreadyAdded = namesOfAddedRulesets
             , userModel = userModel
             }
 
         addStylesCmd =
-            if stylesToAdd == [] then
+            if rulesToBeAdded == [] then
                 Cmd.none
             else
-                addStyles stylesToAdd
+                addStyles rulesToBeAdded
 
         cmd =
             Cmd.batch [ addStylesCmd, userCmd ]

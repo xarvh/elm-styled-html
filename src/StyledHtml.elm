@@ -299,7 +299,7 @@ programFunctions args =
             Private.wrappingModelAndCmd args.addStyles args.view Set.empty (args.init flags)
 
         update msg programModel =
-            Private.wrappingModelAndCmd args.addStyles args.view programModel.addedCssSelectors (args.update msg programModel.userModel)
+            Private.wrappingModelAndCmd args.addStyles args.view programModel.namesOfRulesetsAlreadyAdded (args.update msg programModel.userModel)
 
         view programModel =
             programModel.viewAsVanillaHtml

@@ -6,6 +6,8 @@ module StyledHtml.Attributes
         , map
         , class
         , classList
+        , ruleset
+        , rulesetList
         , id
         , title
         , hidden
@@ -102,63 +104,114 @@ module StyledHtml.Attributes
         )
 
 {-| This module works just like `Html.Attributes`.
-The only differences are in the `style`, `class` and `classList` functions.
-
+It has two more functions, `ruleset` and `rulesetList`, that work like `class` and `classList` but accept,
+rather than a String, a StyledHtml.Ruleset.
 
 Please note that any reference to the `Attribute` type inside this module, refers to `StyledHtml.Attribute` NOT to `Html.Attribute`.
 
 
 # Stuff that is different
+
 @docs style, class, classList
 
+
 # Primitives
+
 @docs property, attribute, map
+
+
 # Super Common Attributes
+
 @docs id, title, hidden
+
+
 # Inputs
+
 @docs type_, value, defaultValue, checked, placeholder, selected
+
+
 ## Input Helpers
+
 @docs accept, acceptCharset, action, autocomplete, autofocus,
-    disabled, enctype, formaction, list, maxlength, minlength, method, multiple,
-    name, novalidate, pattern, readonly, required, size, for, form
+disabled, enctype, formaction, list, maxlength, minlength, method, multiple,
+name, novalidate, pattern, readonly, required, size, for, form
+
+
 ## Input Ranges
+
 @docs max, min, step
+
+
 ## Input Text Areas
+
 @docs cols, rows, wrap
+
+
 # Links and Areas
+
 @docs href, target, download, downloadAs, hreflang, media, ping, rel
+
+
 ## Maps
+
 @docs ismap, usemap, shape, coords
+
+
 # Embedded Content
+
 @docs src, height, width, alt
+
+
 ## Audio and Video
+
 @docs autoplay, controls, loop, preload, poster, default, kind, srclang
+
+
 ## iframes
+
 @docs sandbox, seamless, srcdoc
+
+
 # Ordered Lists
+
 @docs reversed, start
+
+
 # Tables
+
 @docs align, colspan, rowspan, headers, scope
+
+
 # Header Stuff
+
 @docs async, charset, content, defer, httpEquiv, language, scoped
+
+
 # Less Common Global Attributes
+
 Attributes that can be attached to any HTML tag but are less commonly used.
 @docs accesskey, contenteditable, contextmenu, dir, draggable, dropzone,
-      itemprop, lang, spellcheck, tabindex
+itemprop, lang, spellcheck, tabindex
+
+
 # Key Generation
+
 @docs challenge, keytype
+
+
 # Miscellaneous
+
 @docs cite, datetime, pubdate, manifest
+
 -}
 
 import Json.Encode as Json
 import StyledHtml.Css
-import StyledHtml.Private as Private exposing (Attribute, Class, StyleSnippet, Rule)
+import StyledHtml.Private as Private exposing (Attribute, Ruleset, Rule, Declaration)
 import VirtualDom
 
 
-{-|
--}
+{-| -}
 map : (a -> b) -> Attribute a -> Attribute b
 map =
     Private.mapAttribute
@@ -167,44 +220,21 @@ map =
 {-| This function accepts only classes created with `StyledHtml.Css.makeClass`.
 
 If you want to use a string as class name, use `stringProperty "className" yourString` instead.
+
 -}
-class : Class -> Attribute msg
-class class =
-    Private.StyleAttribute [ class ]
+ruleset : Ruleset -> Attribute msg
+ruleset ruleset =
+    Private.StyleAttribute [ ruleset ]
 
 
 {-| This function accepts only classes created with `StyledHtml.Css.makeClass`.
 -}
-classList : List ( Class, Bool ) -> Attribute msg
-classList list =
+rulesetList : List ( Ruleset, Bool ) -> Attribute msg
+rulesetList list =
     list
         |> List.filter Tuple.second
         |> List.map Tuple.first
         |> Private.StyleAttribute
-
-
-{-| This is used to declare style inline with an element.
-Under the hood, it will create an anonymous hashed class.
-
-The first argument is the list of attributes.
-
-The second argument is a list nested rules.
-
-
-    div
-      [ StyledHtml.Attributes.style
-        [ "background-color: green"
-        , "text-transform: uppercase"
-        ]
-        [ StyledHtml.Css.selector ":hover"
-          [ "background-color: blue" ]
-          []
-        ]
-      ]
--}
-style : List StyleSnippet -> List (List Rule) -> Attribute msg
-style styleSnippets compositeRules =
-    class <| StyledHtml.Css.makeClass "_anon_" styleSnippets compositeRules
 
 
 
@@ -214,19 +244,61 @@ style styleSnippets compositeRules =
    with the few notable differences:
 
    * property and attribute return a StyledHtml.Attribute rather than a Html.Attribute
-   * class, classList, style, map have been overridden entirely
+   * class, classList and map have been overridden entirely
 
 -}
 
 
+{-| Specify a list of styles.
+myStyle : Attribute msg
+myStyle =
+style
+[ ("backgroundColor", "red")
+, ("height", "90px")
+, ("width", "100%")
+]
+greeting : Html msg
+greeting =
+div [ myStyle ][ text "Hello!" ]
+There is no `Html.Styles` module because best practices for working with HTML
+suggest that this should primarily be specified in CSS files. So the general
+recommendation is to use this function lightly.
+-}
+style : List ( String, String ) -> Attribute msg
+style =
+    Private.VirtualDomProperty << VirtualDom.style
+
+
+{-| This function makes it easier to build a space-separated class attribute.
+Each class can easily be added and removed depending on the boolean value it
+is paired with. For example, maybe we want a way to view notices:
+viewNotice : Notice -> Html msg
+viewNotice notice =
+div
+[ classList
+[ ("notice", True)
+, ("notice-important", notice.isImportant)
+, ("notice-seen", notice.isSeen)
+]
+][ text notice.content ]
+-}
+classList : List ( String, Bool ) -> Attribute msg
+classList list =
+    list
+        |> List.filter Tuple.second
+        |> List.map Tuple.first
+        |> String.join " "
+        |> class
+
+
 {-| Create *properties*, like saying `domNode.className = 'greeting'` in
 JavaScript.
-    import Json.Encode as Encode
-    class : String -> Attribute msg
-    class name =
-      property "className" (Encode.string name)
-Read more about the difference between properties and attributes [here][].
-[here]: https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md
+import Json.Encode as Encode
+class : String -> Attribute msg
+class name =
+property "className" (Encode.string name)
+Read more about the difference between properties and attributes [here].
+[here]: <https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md>
 -}
 property : String -> Json.Value -> Attribute msg
 property name value =
@@ -245,11 +317,11 @@ boolProperty name bool =
 
 {-| Create *attributes*, like saying `domNode.setAttribute('class', 'greeting')`
 in JavaScript.
-    class : String -> Attribute msg
-    class name =
-      attribute "class" name
-Read more about the difference between properties and attributes [here][].
-[here]: https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md
+class : String -> Attribute msg
+class name =
+attribute "class" name
+Read more about the difference between properties and attributes [here].
+[here]: <https://github.com/elm-lang/html/blob/master/properties-vs-attributes.md>
 -}
 attribute : String -> String -> Attribute msg
 attribute name value =
@@ -258,6 +330,13 @@ attribute name value =
 
 
 -- GLOBAL ATTRIBUTES
+
+
+{-| Often used with CSS to style elements with common properties.
+-}
+class : String -> Attribute msg
+class name =
+    stringProperty "className" name
 
 
 {-| Indicates the relevance of an element.
@@ -370,9 +449,11 @@ async bool =
 
 
 {-| Declares the character encoding of the page or script. Common values include:
-  * UTF-8 - Character encoding for Unicode
-  * ISO-8859-1 - Character encoding for the Latin alphabet
-For `meta` and `script`.
+
+  - UTF-8 - Character encoding for Unicode
+  - ISO-8859-1 - Character encoding for the Latin alphabet
+    For `meta` and `script`.
+
 -}
 charset : String -> Attribute msg
 charset value =
@@ -902,7 +983,7 @@ keytype value =
 
 
 {-| Specifies the horizontal alignment of a `caption`, `col`, `colgroup`,
-`hr`, `iframe`, `img`, `table`, `tbody`,  `td`,  `tfoot`, `th`, `thead`, or
+`hr`, `iframe`, `img`, `table`, `tbody`, `td`, `tfoot`, `th`, `thead`, or
 `tr`.
 -}
 align : String -> Attribute msg
@@ -931,11 +1012,13 @@ href value =
 
 {-| Specify where the results of clicking an `a`, `area`, `base`, or `form`
 should appear. Possible special values include:
-  * _blank &mdash; a new window or tab
-  * _self &mdash; the same frame (this is default)
-  * _parent &mdash; the parent frame
-  * _top &mdash; the full body of the window
-You can also give the name of any `frame` you have created.
+
+  - _blank &mdash; a new window or tab
+  - _self &mdash; the same frame (this is default)
+  - _parent &mdash; the parent frame
+  - _top &mdash; the full body of the window
+    You can also give the name of any `frame` you have created.
+
 -}
 target : String -> Attribute msg
 target value =

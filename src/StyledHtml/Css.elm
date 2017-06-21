@@ -1,38 +1,32 @@
 module StyledHtml.Css
     exposing
         ( selector
-        , andClass
-        , makeClass
-        , Class
+        , andRuleset
+        , makeRuleset
+        , Ruleset
         )
 
 {-| This modules allows you to define and combine styles for Styled Html.
 
 
 # Defining named classes
-@docs Class, makeClass
+@docs Ruleset, makeRuleset
 
 # Combining selectors
-@docs selector, andClass
+@docs selector, andRuleset
 -}
 
-import FNV
-import ParseInt
 import String
 import String.Extra
-import StyledHtml.Private exposing (Rule, StyleSnippet)
+import StyledHtml.Private exposing (Rule, Declaration)
 
 
 {-| This describes a Styled Html class.
 -}
-type alias Class =
-    StyledHtml.Private.Class
+type alias Ruleset =
+    StyledHtml.Private.Ruleset
 
 
-{-| TODO: implement ParseInt.toHex for speed and remove ParseInt dependency
--}
-calculateHash =
-    FNV.hashString >> ParseInt.toHex >> String.toLower
 
 
 extendSelector left right =
@@ -43,8 +37,8 @@ extendSelector left right =
 
 {-| Creates a new CSS rule (extending the parent rule) with the given CSS selector.
 
-    buttonClass =
-      StyledHtml.Css.makeClass "button"
+    buttonRuleset =
+      StyledHtml.Css.makeRuleset "button"
         [ "border: 2px solid grey" ]
         [ StyledHtml.Css.selector ":hover"
           [ "background-color: grey"
@@ -71,11 +65,11 @@ will result in these rules:
       fill: red;
     }
 -}
-selector : String -> List StyleSnippet -> List (List Rule) -> List Rule
-selector selector styleSnippets compositeRules =
+selector : String -> List Declaration -> List (List Rule) -> List Rule
+selector selector declarations compositeRules =
     let
         unscopedRules =
-            { selector = "", styleSnippets = styleSnippets } :: List.concat compositeRules
+            { selector = "", declarations = declarations } :: List.concat compositeRules
 
         scopedRules =
             unscopedRules
@@ -84,15 +78,15 @@ selector selector styleSnippets compositeRules =
         scopedRules
 
 
-{-| This is used to select a Styled Html Class.
+{-| This is used to select a Styled Html Ruleset.
 
-    buttonClass =
-        StyledHtml.Css.makeClass "button" [] []
+    buttonRuleset =
+        StyledHtml.Css.makeRuleset "button" [] []
 
-    inputClass =
-        StyledHtml.Css.makeClass "input"
+    inputRuleset =
+        StyledHtml.Css.makeRuleset "input"
           [ "border: 1px solid #b1b1b1" ]
-          [ StyledHtml.Css.andClass buttonClass
+          [ StyledHtml.Css.andRuleset buttonRuleset
             [ "border: 2px solid #b1b1b1"
             , "cursor: pointer"
             ]
@@ -113,12 +107,12 @@ will produce the rules:
       cursor: pointer;
     }
 -}
-andClass : Class -> List StyleSnippet -> List (List Rule) -> List Rule
-andClass class styleSnippets compositeRules =
-    selector ("." ++ class.name) styleSnippets compositeRules
+andRuleset : Ruleset -> List Declaration -> List (List Rule) -> List Rule
+andRuleset ruleset declarations compositeRules =
+    selector ("." ++ ruleset.className) declarations compositeRules
 
 
-{-| Defines a new styled html `Class`.
+{-| Defines a new styled html `Ruleset`.
 
 The first argument is the name to use as a base for the class name.
 Under the hood, this base name will be extended with a hash string of the class rules.
@@ -126,8 +120,8 @@ Under the hood, this base name will be extended with a hash string of the class 
 The second argument is a list of style attributes to apply directly to the class, and
 the third argument can be used to make composite selections.
 
-    modalContainerClass =
-      StyledHtml.Css.makeClass "modal-container"
+    modalContainerRuleset =
+      StyledHtml.Css.makeRuleset "modal-container"
         [ "display: flex"
         , "justify-content: center"
         ]
@@ -147,41 +141,28 @@ will produce the rules:
         width: 12px;
     }
 -}
-makeClass : String -> List StyleSnippet -> List (List Rule) -> Class
-makeClass rawClassName styleSnippets compositeRules =
+makeRuleset : String -> List Declaration -> List (List Rule) -> Ruleset
+makeRuleset className declarations compositeRules =
     let
-        -- TODO: ensure it does not make sense as a CSS selector
-        classNamePlaceholder =
-            "@@classname@@"
+        declarationToString declaration =
+            "  " ++ declaration ++ ";\n"
 
-        rulesWithPlaceholder =
-            selector ("." ++ classNamePlaceholder) styleSnippets compositeRules
-
-        -- TODO: This should be a configured option
-        hash =
-            -- TODO: properly convert the rules to a string?
-            calculateHash (toString rulesWithPlaceholder)
-
-        -- TODO: the function to turn raw class name and hash into actual class name should be a configured option?
-        finalClassName =
-            rawClassName ++ "_" ++ hash
-
-        snippetToString snippet =
-            "  " ++ snippet ++ ";\n"
-
-        snippetsToString snippets =
-            snippets
-                |> List.map snippetToString
+        declarationsToString rules =
+            rules
+                |> List.map declarationToString
                 |> String.join ""
 
         ruleToString rule =
-            String.Extra.replace classNamePlaceholder finalClassName rule.selector ++ " {\n" ++ snippetsToString rule.styleSnippets ++ "}\n"
+             rule.selector ++ " {\n" ++ declarationsToString rule.declarations ++ "}\n"
 
-        actualRules =
-            rulesWithPlaceholder
+        rules =
+            selector ("." ++ className) declarations compositeRules
+
+        rulesAsSingleString =
+            rules
                 |> List.map ruleToString
                 |> String.join "\n"
     in
-        { name = finalClassName
-        , rules = actualRules
+        { className = className
+        , rules = rulesAsSingleString
         }
